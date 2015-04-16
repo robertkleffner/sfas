@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game</title>
+  <script src="js/phaser.min.js"></script>
+
+  <script src="js/utils.js"></script>
+  <script src="js/combinators.js"></script>
+  <script src="js/sfas.js"></script>
+
+  <script src="js/battle.js"></script>
+  <script src="js/splash.js"></script>
+  <script src="js/profiler.js"></script>
+
+  <link rel="stylesheet" href="css/default.css">
+</head>
+<body>
+  <script>
+    (function () {
+      cards.Initialize();
+
+      var game = new Phaser.Game(640, 360, Phaser.AUTO, "game");
+      game.state.add("Splash", splash);
+      game.state.add("Profiler", profiler);
+      game.state.add("Battle", battle);
+      game.state.start("Splash");
+
+      sfas.game = new sfas.Game();
+      sfas.game.Initialize();
+    })();
+  </script>
+</body>
+</html>
