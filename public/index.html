@@ -5,29 +5,37 @@
   <title>Game</title>
   <script src="js/phaser.min.js"></script>
 
-  <script src="js/utils.js"></script>
-  <script src="js/combinators.js"></script>
-  <script src="js/sfas.js"></script>
-
   <script src="js/battle.js"></script>
   <script src="js/splash.js"></script>
   <script src="js/profiler.js"></script>
+
+  <script src="/socket.io/socket.io.js"></script>
 
   <link rel="stylesheet" href="css/default.css">
 </head>
 <body>
   <script>
     (function () {
-      cards.Initialize();
-
       var game = new Phaser.Game(640, 360, Phaser.AUTO, "game");
       game.state.add("Splash", splash);
       game.state.add("Profiler", profiler);
       game.state.add("Battle", battle);
       game.state.start("Splash");
 
-      sfas.game = new sfas.Game();
-      sfas.game.Initialize();
+      game.utils = {
+          MAXIMUM_CARDS_IN_DECK: 30,
+          MAXIMUM_DECKS: 9,
+          MAXIMUM_GEARS: 10,
+          MAXIMUM_LIVE_AUTOMATONS: 7,
+          MAXIMUM_AVATAR_HEALTH: 30,
+
+          BABBOCK: 0,
+          DE_BORG: 1,
+          VAN_NEWMAN: 2,
+          MCCREARY: 3,
+      };
+
+      game.socket = io();
     })();
   </script>
 </body>

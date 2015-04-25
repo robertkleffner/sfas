@@ -1,4 +1,4 @@
-var cards = {
+module.exports = {
 
 // Each combinator has a play function of type (Match, Avatar, Avatar) -> Boolean
 // The boolean return value says whether the play was successful or not.
@@ -204,6 +204,15 @@ Hoist: {
             this.target.line.Push(auto.submatons[i]);
         }
         return true;
+    }
+},
+
+// ->    (+1 gear this turn)
+TheGear: {
+    name: 'The Gear',
+    cost: 0,
+    Play: function(match, owner, target) {
+        this.owner.AddGears(1);
     }
 },
 

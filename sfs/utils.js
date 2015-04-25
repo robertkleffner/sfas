@@ -1,5 +1,6 @@
-var utils = {
+module.exports = {
     MAXIMUM_CARDS_IN_DECK: 30,
+    MAXIMUM_CARDS_IN_HAND: 10,
     MAXIMUM_DECKS: 9,
     MAXIMUM_GEARS: 10,
     MAXIMUM_LIVE_AUTOMATONS: 7,
@@ -32,4 +33,4 @@ var utils = {
 
       return array;
     }
-};
+}
