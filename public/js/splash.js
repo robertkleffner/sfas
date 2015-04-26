@@ -2,10 +2,12 @@ var splash = function(game){};
 
 splash.prototype = {
     preload: function(){
+        this.game.load.image('gauges', 'assets/backgrounds/gauges.jpg');
         this.game.load.image("play", "assets/icons/cog.png");
     },
     create: function(){
-        this.game.stage.backgroundColor = '#ddd';
+        this.game.add.sprite(0, 0, 'gauges');
+
         this.game.stage.draggable = true;
         var playButton = this.game.add.button(320, 240, "play", this.play, this);
         playButton.scale.setTo(0.3, 0.3);

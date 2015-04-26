@@ -1,1 +1,3 @@
-Song for a System: A card game inspired by the concatenative combinatory calculus
+The OpenShift `nodejs` cartridge documentation can be found at:
+
+http://openshift.github.io/documentation/oo_cartridge_guide.html#nodejs

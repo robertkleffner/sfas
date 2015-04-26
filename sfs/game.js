@@ -60,6 +60,8 @@ Match: function() {
     this.StartMatch = function() {
         this.firstPlayer.match = this;
         this.secondPlayer.match = this;
+        this.firstPlayer.avatar.opponent = this.secondPlayer.avatar;
+        this.secondPlayer.avatar.opponent = this.firstPlayer.avatar;
 
         console.log('Match started between ' + this.firstPlayer.name + ' and ' + this.secondPlayer.name);
 
@@ -76,6 +78,9 @@ Match: function() {
         console.log(this.firstPlayer.avatar.hand);
         console.log(this.secondPlayer.name + ' starting hand: ');
         console.log(this.secondPlayer.avatar.hand);
+
+        this.firstPlayer.socket.emit('match started', this.Distill(true));
+        this.secondPlayer.socket.emit('match started', this.Distill(false));
     };
 
     this.AssignPlayer = function(player) {
@@ -92,6 +97,15 @@ Match: function() {
             } else {
                 this.secondPlayer = player;
             }
+        }
+    };
+
+    // Distill's the game data into a nice neat package to send across the server
+    this.Distill = function(first) {
+        if (first) {
+            return { player: this.firstPlayer.Distill(), opponent: this.secondPlayer.Distill() };
+        } else {
+            return { player: this.secondPlayer.Distill(), opponent: this.firstPlayer.Distill() };
         }
     };
 },
@@ -128,9 +142,13 @@ Player: function(id, socket) {
     this.DeleteDeck = function(index) {
         if (index >= this.decks.length) { return; }
         this.decks.splice(index, 1);
-    }
+    };
 
-    this.InMatch = function() { return this.avatar != null; }
+    this.InMatch = function() { return this.avatar != null; };
+
+    this.Distill = function() {
+        return { avatar: this.avatar.Distill(), name: this.name, id: this.id };
+    };
 },
 
 // This class represents the player's match information
@@ -185,6 +203,41 @@ Avatar: function(deck, character) {
         }
         return this;
     };
+
+    this.Distill = function() {
+        return {
+            deck: this.deck.Distill(),
+            hand: this.hand,
+            health: this.health,
+            character: this.character,
+            activeGears: this.activeGears,
+            maxGears: this.maxGears,
+            line: this.line.Distill()
+        };
+    };
+},
+
+// This class represents the automaton front line
+Line: function() {
+    this.automatons = [];
+
+    this.Push = function(auto) {
+        // NOTE: this simple if-statement is actually a huge mechanic!
+        // it means that left-most automatons can be destroyed if played
+        // if there's already too many automatons on the line
+        if (this.automatons.length < utils.MAXIMUM_LIVE_AUTOMATONS) {
+            auto.canAttack = true;
+            this.automatons.unshift(auto);
+        }
+    };
+
+    this.Pop = function() { return this.automatons.shift(); };
+
+    this.Clear = function() { this.automatons = []; };
+
+    this.Length = function() { return this.automatons.length; };
+
+    this.Distill = function () { return { automatons: this.automatons }; };
 },
 
 // This class represents an automaton on the player's
@@ -211,27 +264,6 @@ Automaton: function(submatons) {
         }
         return new sfs.Automaton(subs);
     }
-},
-
-// This class represents the automaton front line
-Line: function() {
-    this.automatons = [];
-
-    this.Push = function(auto) {
-        // NOTE: this simple if-statement is actually a huge mechanic!
-        // it means that left-most automatons can be destroyed if played
-        // if there's already too many automatons on the line
-        if (this.automatons.length < utils.MAXIMUM_LIVE_AUTOMATONS) {
-            auto.canAttack = true;
-            this.automatons.unshift(auto);
-        }
-    };
-
-    this.Pop = function() { return this.automatons.shift(); };
-
-    this.Clear = function() { this.automatons = []; };
-
-    this.Length = function() { return this.automatons.length; }
 },
 
 // This class represents a constructed deck.
@@ -279,6 +311,13 @@ Deck: function(name) {
         var nueva = new sfs.Deck(this.name);
         nueva.cards = this.cards.splice(0);
         return nueva;
+    };
+
+    this.Distill = function() {
+        return {
+            name: this.name,
+            cards: this.cards
+        };
     };
 },
 

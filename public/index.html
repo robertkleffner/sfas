@@ -33,9 +33,15 @@
           DE_BORG: 1,
           VAN_NEWMAN: 2,
           MCCREARY: 3,
+
+          avatarMap: ['babbock', 'de_borg', 'van_newman', 'mccreary']
       };
 
       game.socket = io();
+
+      game.socket.on('match started', function(data) {
+          game.state.start('Battle', true, false, data);
+      });
     })();
   </script>
 </body>
