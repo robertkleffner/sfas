@@ -24,9 +24,14 @@ battle.prototype = {
     init: function(data) {
         this.playerHand = [];
         this.opponentHand = [];
+        this.allyLine = [];
+        this.opponentLine = [];
+        this.created = false;
 
         console.log('Battle commencing!');
         this.updateData(data);
+
+        this.startHandPositionX = 145;
     },
 
     create: function(){
@@ -34,109 +39,108 @@ battle.prototype = {
         this.game.add.sprite(0, 0, 'match_background');
 
         this.setupAvatars();
-        this.setupCardPreview();
         this.updateHand();
-
-        // create battle line
-        var line = [];
-        var startLinePosX = 145;
-        var startLinePosY = 170;
-        for (var i = 0; i < 10; i++){
-            var card = {};
-            var cardBackBox = this.game.add.bitmapData(45, 60);
-            cardBackBox.ctx.beginPath();
-            cardBackBox.ctx.rect(0, 0, 45, 60);
-            cardBackBox.ctx.fillStyle = '#fff';
-            cardBackBox.ctx.fill();
-            var back = this.game.add.sprite(startLinePosX + i *48, startLinePosY, cardBackBox);
-            var cardImage = this.game.add.sprite(startLinePosX + i*48, startLinePosY, 'minion');
-            cardImage.scale.setTo(.09,.09);
-            var health = this.game.add.text(startLinePosX + 3 + i*48, startLinePosY + 45,
-                '1', {fontSize: '12px', fill: '#f00'});
-            var attack = this.game.add.text(startLinePosX + 30 + i*48, startLinePosY + 45,
-                '1', {fontSize: '12px', fill: '#00f'});
-        }
-
-        // create enemy battle line
-        var enemyLine = [];
-        var startEnemyLinePosX = 145;
-        var startEnemyLinePoxY = 90;
-        for (var i = 0; i < 10; i++){
-            var card = {};
-            var cardBackBox = this.game.add.bitmapData(45, 60);
-            cardBackBox.ctx.beginPath();
-            cardBackBox.ctx.rect(0, 0, 45, 60);
-            cardBackBox.ctx.fillStyle = '#fff';
-            cardBackBox.ctx.fill();
-            var back = this.game.add.sprite(startHandPosX + i *48, startEnemyLinePoxY, cardBackBox);
-            var cardImage = this.game.add.sprite(startEnemyLinePosX + i*48, startEnemyLinePoxY, 'minion');
-            cardImage.scale.setTo(.09,.09);
-            var health = this.game.add.text(startEnemyLinePosX + 3 + i*48, startEnemyLinePoxY + 45, '1', {fontSize: '12px', fill: '#f00'});
-            var attack = this.game.add.text(startEnemyLinePosX + 30 + i*48, startEnemyLinePoxY + 45, '1', {fontSize: '12px', fill: '#00f'});
-        }
+        this.createButtons();
+        this.updateLines();
+        
+        this.created = true;
     },
 
-    update: function(){
+    update: function() {
+        
     },
 
     setupAvatars: function() {
-        // The bottom player is the active player
-        var profileImage = this.game.add.sprite(5, 280, this.game.utils.avatarMap[this.data.player.avatar.character]);
-        profileImage.scale.setTo(0.6, 0.6);
+        // The bottom player is the client player
+        this.allyProfile = this.game.add.sprite(5, 280, this.game.utils.avatarMap[this.data.player.avatar.character]);
+        this.allyProfile.scale.setTo(0.6, 0.6);
+        this.allyProfile.tint = this.data.player.id == this.data.active ? 0x00ffff : 0xffffff;
 
         this.game.add.sprite(80, 270, 'heart').scale.setTo(.06,.06);
-        var heroHealth = this.game.add.text(110, 273, this.data.player.avatar.health, {fontSize: '20px', fill: '#F00'});
+        this.allyHealth = this.game.add.text(110, 273, this.data.player.avatar.health, {fontSize: '20px', fill: '#F00'});
         var abilityBack = this.game.add.bitmapData(52, 52);
         abilityBack.ctx.beginPath();
         abilityBack.ctx.rect(0, 0, 52, 52);
         abilityBack.ctx.fillStyle = '#ff0000';
         abilityBack.ctx.fill();
-        var back = this.game.add.sprite(80, 305, abilityBack);
-        var characterAbility = this.game.add.sprite(80, 305, 'ability');
-        characterAbility.scale.setTo(0.1, 0.1);
+        this.game.add.sprite(80, 305, abilityBack);
+        this.characterAbility = this.game.add.sprite(80, 305, 'ability');
+        this.characterAbility.scale.setTo(0.1, 0.1);
+        this.characterAbility.inputEnabled = this.data.player.id == this.data.active;
+        this.characterAbility.useHandCursor = true;
+        this.characterAbility.events.onInputDown.add(this.characterPower.bind(this));
 
         // The top player is the opponent
-        var enemyProfile = this.game.add.sprite(582, 10, this.game.utils.avatarMap[this.data.opponent.avatar.character]);
-        enemyProfile.scale.setTo(0.44, 0.44);
+        this.enemyProfile = this.game.add.sprite(582, 10, this.game.utils.avatarMap[this.data.opponent.avatar.character]);
+        this.enemyProfile.scale.setTo(0.44, 0.44);
+        this.enemyProfile.tint = this.data.player.id != this.data.active ? 0x00ffff : 0xffffff;
 
         this.game.add.sprite(530, 5, 'heart').scale.setTo(0.05, 0.05);
-        var enemyHealth = this.game.add.text(555, 5, this.data.opponent.avatar.health, {fontSize: '20px', fill: '#F00'});
+        this.enemyHealth = this.game.add.text(555, 5, this.data.opponent.avatar.health, {fontSize: '20px', fill: '#F00'});
         var enemyAbilityBack = this.game.add.bitmapData(48, 48);
         enemyAbilityBack.ctx.beginPath();
         enemyAbilityBack.ctx.rect(0, 0, 48, 48);
         enemyAbilityBack.ctx.fillStyle = '#ff0000';
         enemyAbilityBack.ctx.fill();
-        var enemyBack = this.game.add.sprite(530, 35, enemyAbilityBack);
+        this.game.add.sprite(530, 35, enemyAbilityBack);
         var enemyAbility = this.game.add.sprite(530, 35, 'enemy_ability');
         enemyAbility.scale.setTo(0.09, 0.09);
 
         this.game.add.sprite(590, 295, 'cog').scale.setTo(.05,.05);
-        var currentCog = this.game.add.text(580, 325, this.data.player.avatar.activeGears, {fontSize: '20px', fill: '#00F'});
-        var div = this.game.add.text(603, 325, '/', {fontSize: '20px', fill: '#000'});
-        var totalCog = this.game.add.text(610, 325, this.data.player.avatar.maxGears, {fontSize: '20px', fill: '#00F'});
+        this.activeGears = this.game.add.text(580, 325, this.data.player.avatar.activeGears + '', {fontSize: '20px', fill: '#00F'});
+        this.game.add.text(603, 325, '/', {fontSize: '20px', fill: '#000'});
+        this.maxGears = this.game.add.text(610, 325, this.data.player.avatar.maxGears + '', {fontSize: '20px', fill: '#00F'});
     },
-
-    setupCardPreview: function() {
-        // Create card preview
-        var cardBack = this.game.add.bitmapData(124, 250);
-        cardBack.ctx.beginPath();
-        cardBack.ctx.rect(0, 0, 135, 220);
-        cardBack.ctx.fillStyle = '#ffffff';
-        cardBack.ctx.fill();
-        var back = this.game.add.sprite(5, 30, cardBack);
-        var cardCog = this.game.add.sprite(85, 30, 'cog');
-        cardCog.scale.setTo(.04,.04);
-        var cardCost = this.game.add.text(105, 31, '10', {fontSize: '16px', fill:'#000'});
-        var cardName = this.game.add.text(15, 55, 'Duplicate', {fontSize: '12px', fill: '#000'})
-        var cardImage = this.game.add.sprite(15, 75, 'minion');
-        cardImage.scale.setTo(0.2, 0.2);
-        var description = this.game.add.text(15, 190, 'Description', {fontSize: '10px', fill: '#333'});
+    
+    createButtons: function() {
+        var buttonBack = this.game.add.bitmapData(150, 40);
+        buttonBack.ctx.beginPath();
+        buttonBack.ctx.rect(0,0,150,40);
+        buttonBack.ctx.fillStyle = '#ffffff';
+        buttonBack.ctx.fill();
+        
+        var yheight = 240;
+        
+        this.allyButton = this.game.add.sprite(this.startHandPositionX, yheight, buttonBack);
+        this.game.add.text(this.startHandPositionX + 5, yheight, 'Play Ally', {fontSize: '20px', fill: '#080'});
+        this.allyButton.tint = 0xdddddd;
+        this.allyButton.inputEnabled = this.data.player.id == this.data.active;
+        this.allyButton.useHandCursor = true;
+        this.allyButton.events.onInputDown.add(this.playCardOnAlly.bind(this, this.allyButton));
+        
+        this.enemyButton = this.game.add.sprite(this.startHandPositionX + 160, yheight, buttonBack);
+        this.game.add.text(this.startHandPositionX + 160 + 5, yheight, 'Play Enemy', {fontSize: '20px', fill: '#800'});
+        this.enemyButton.tint = 0xdddddd;
+        this.enemyButton.inputEnabled = this.data.player.id == this.data.active;
+        this.enemyButton.useHandCursor = true;
+        this.enemyButton.events.onInputDown.add(this.playCardOnEnemy.bind(this, this.enemyButton));
+        
+        this.endButton = this.game.add.sprite(this.startHandPositionX + 320, yheight, buttonBack);
+        this.game.add.text(this.startHandPositionX + 320 + 5, yheight, 'End Turn', {fontSize: '20px', fill: '#000'});
+        this.endButton.tint = 0xdddddd;
+        this.endButton.inputEnabled = this.data.player.id == this.data.active;
+        this.endButton.useHandCursor = true;
+        this.endButton.events.onInputDown.add(this.endTurn.bind(this, this.endButton));
     },
 
     updateData: function(data) {
         console.log("Updating data: ");
         this.data = data;
         console.log(this.data);
+        
+        if (this.created) {
+            var isActive = this.data.player.id == this.data.active;
+            this.allyProfile.tint = isActive ? 0x00ffff : 0xffffff;
+            this.enemyProfile.tint = this.data.opponent.id == this.data.active ? 0x00ffff : 0xffffff;
+            this.characterAbility.inputEnabled = this.allyButton.inputEnabled = this.enemyButton.inputEnabled = this.endButton.inputEnabled = isActive;
+            this.allyHealth.text = this.data.player.avatar.health + '';
+            this.enemyHealth.text = this.data.opponent.avatar.health + '';
+            this.activeGears.text = this.data.player.avatar.activeGears + '';
+            this.maxGears.text = this.data.player.avatar.maxGears + '';
+        }
+        
+        this.updateHand();
+        this.updateLines();
     },
 
     updateHand: function() {
@@ -145,39 +149,188 @@ battle.prototype = {
         this.playerHand.length = this.opponentHand.length = 0;
 
         // Create player hand display
-        var startHandPos = 145;
         var startHandPoxY = 300;
         for (var i = 0; i < this.data.player.avatar.hand.length; i++){
+            var cardData = this.data.player.avatar.hand[i];
             var card = this.game.add.group();
 
             var cardBackBox = this.game.add.bitmapData(40, 50);
             cardBackBox.ctx.beginPath();
             cardBackBox.ctx.rect(0, 0, 40, 50);
-            cardBackBox.ctx.fillStyle = '#ffffff';
+            cardBackBox.ctx.fillStyle = '#eeeeee';
             cardBackBox.ctx.fill();
 
-            var back = this.game.add.sprite(startHandPos + i *43, startHandPoxY, cardBackBox);
-            var cardCogs = this.game.add.sprite(startHandPos + i*43, startHandPoxY, 'cog');
-            cardCogs.scale.setTo(0.03, 0.03);
-            var cardImage = this.game.add.sprite(startHandPos + i*43, startHandPoxY + 10, 'minion');
+            var pback = this.game.add.sprite(this.startHandPositionX + i *43, startHandPoxY, cardBackBox);
+            pback.inputEnabled = true;
+            pback.useHandCursor = true;
+            pback.events.onInputDown.add(this.cardMouseDown.bind(this, card, this.data.player.avatar.hand[i]), this);
+
+            var cardCogs = this.game.add.sprite(this.startHandPositionX + i*43 + 17, startHandPoxY, 'cog');
+            cardCogs.scale.setTo(0.02, 0.02);
+            var cardImage = this.game.add.sprite(this.startHandPositionX + i*43, startHandPoxY + 10, cardData.image);
             cardImage.scale.setTo(.08,.08);
 
-            card.add(back);
+            card.add(pback);
             card.add(cardCogs);
             card.add(cardImage);
+            card.select = (function(sprite) { this.selected = true; sprite.tint = 0x00ff00; }).bind(card, pback);
+            card.deselect = (function(sprite) { this.selected = false; sprite.tint = 0xffffff; }).bind(card, pback);
+            card.lockPosition = { x: card.x, y: card.y };
+            this.playerHand.push(card);
         }
 
         // Create enemy hand display
-        var startHandPosX = 145;
         var startHandPoxY = 10;
-        for (var i = 0; i < 10; i++){
-            var card = {};
+        for (var i = 0; i < this.data.opponent.avatar.hand.length; i++){
             var cardBackBox = this.game.add.bitmapData(35, 50);
             cardBackBox.ctx.beginPath();
             cardBackBox.ctx.rect(0, 0, 40, 50);
-            cardBackBox.ctx.fillStyle = '#ffffff';
+            cardBackBox.ctx.fillStyle = '#777777';
             cardBackBox.ctx.fill();
-            var back = this.game.add.sprite(startHandPosX + i *37, startHandPoxY, cardBackBox);
+            var back = this.game.add.sprite(this.startHandPositionX + i *37, startHandPoxY, cardBackBox);
+            this.opponentHand.push(back);
         }
+    },
+    
+    updateLines: function() {
+        // create ally battle line
+        this.allyLine.map(function(s) { s.destroy(); });
+        this.opponentLine.map(function(s) { s.destroy(); });
+        this.allyLine.length = this.opponentLine.length = 0;
+        
+        var startLinePosY = 170;
+        for (var i = 0; i < this.data.player.avatar.line.automatons.length; i++){
+            var automaton = this.data.player.avatar.line.automatons[i];
+            var card = this.game.add.group();
+            
+            var cardBackBox = this.game.add.bitmapData(45, 60);
+            cardBackBox.ctx.beginPath();
+            cardBackBox.ctx.rect(0, 0, 45, 60);
+            cardBackBox.ctx.fillStyle = '#fff';
+            cardBackBox.ctx.fill();
+            
+            var back = this.game.add.sprite(this.startHandPositionX + i *48, startLinePosY, cardBackBox);
+            var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startLinePosY, 'minion');
+            cardImage.scale.setTo(.09,.09);
+            var health = this.game.add.text(this.startHandPositionX + 3 + i*48, startLinePosY + 45,automaton.durability+'', {fontSize: '12px', fill: '#f00'});
+            var attack = this.game.add.text(this.startHandPositionX + 30 + i*48, startLinePosY + 45,automaton.energy+'', {fontSize: '12px', fill: '#00f'});
+                
+            card.add(back);
+            card.add(cardImage);
+            card.add(health);
+            card.add(attack);
+            this.allyLine.push(card);
+        }
+
+        // create enemy battle line
+        var startEnemyLinePoxY = 90;
+        for (var i = 0; i < this.data.opponent.avatar.line.automatons.length; i++){
+            var automaton = this.data.opponent.avatar.line.automatons[i];
+            var card = this.game.add.group();
+            
+            var cardBackBox = this.game.add.bitmapData(45, 60);
+            cardBackBox.ctx.beginPath();
+            cardBackBox.ctx.rect(0, 0, 45, 60);
+            cardBackBox.ctx.fillStyle = '#fff';
+            cardBackBox.ctx.fill();
+            
+            var back = this.game.add.sprite(this.startHandPositionX + i *48, startEnemyLinePoxY, cardBackBox);
+            var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startEnemyLinePoxY, 'minion');
+            cardImage.scale.setTo(.09,.09);
+            var health = this.game.add.text(this.startHandPositionX + 3 + i*48, startEnemyLinePoxY + 45, automaton.durability+'', {fontSize: '12px', fill: '#f00'});
+            var attack = this.game.add.text(this.startHandPositionX + 30 + i*48, startEnemyLinePoxY + 45, automaton.energy+'', {fontSize: '12px', fill: '#00f'});
+            
+            card.add(back);
+            card.add(cardImage);
+            card.add(health);
+            card.add(attack);
+            this.opponentLine.push(card);
+        }
+    },
+
+    cardMouseDown: function(sprite, card) {
+        this.showCardPreview(card);
+
+        for (var i = 0; i < this.playerHand.length; i++) {
+            this.playerHand[i].deselect();
+        }
+        sprite.select();
+    },
+
+    showCardPreview: function(card) {
+        // Create card preview
+        if (this.cardPreview) {
+            this.cardPreview.destroy();
+        }
+        this.cardPreview = this.game.add.group();
+        var cardBack = this.game.add.bitmapData(124, 250);
+        cardBack.ctx.beginPath();
+        cardBack.ctx.rect(0, 0, 135, 220);
+        cardBack.ctx.fillStyle = '#eeeeee';
+        cardBack.ctx.fill();
+        var back = this.game.add.sprite(5, 30, cardBack);
+        back.inputEnabled = true;
+        back.useHandCursor = true;
+        var cardCog = this.game.add.sprite(85, 30, 'cog');
+        cardCog.scale.setTo(.04,.04);
+        var cardCost = this.game.add.text(105, 31, card.cost + '', {fontSize: '16px', fill:'#000'});
+        var cardName = this.game.add.text(15, 55, card.name, {fontSize: '12px', fill: '#000'})
+        var cardImage = this.game.add.sprite(15, 75, card.image);
+        cardImage.scale.setTo(0.2, 0.2);
+
+        var descStyle = { font: 'bold 10px Arial', fill: '#333', align: 'center', wordWrap: true, wordWrapWidth: 110 };
+        var description = this.game.add.text(15, 190, card.description, descStyle);
+
+        this.cardPreview.add(back);
+        this.cardPreview.add(cardCog);
+        this.cardPreview.add(cardCost);
+        this.cardPreview.add(cardName);
+        this.cardPreview.add(cardImage);
+        this.cardPreview.add(description);
+    },
+    
+    playCardOnAlly: function(sprite) {
+        for (var i = 0; i < this.playerHand.length; i++) {
+            if (this.playerHand[i].selected) {
+                var card = this.data.player.avatar.hand[i];
+                if (this.data.player.avatar.activeGears < card.cost) {
+                    alert('Not enough gears to play ' + card.name);
+                } else {
+                    this.game.socket.emit('play card on ally', i);
+                }
+            }
+        }
+    },
+    
+    playCardOnEnemy: function(sprite) {
+        for (var i = 0; i < this.playerHand.length; i++) {
+            if (this.playerHand[i].selected) {
+                var card = this.data.player.avatar.hand[i];
+                if (this.data.player.avatar.activeGears < card.cost) {
+                    alert('Not enough gears to play ' + card.name);
+                } else {
+                    this.game.socket.emit('play card on enemy', i);
+                }
+            }
+        }
+    },
+    
+    characterPower: function() {
+        if (this.data.player.avatar.activeGears < 2) {
+            alert('Not enough gears to use character power!');
+        } else {
+            this.game.socket.emit('character power');
+        }
+    },
+    
+    endTurn: function(sprite) {
+        this.game.socket.emit('end turn');
+        // disable buttons so player's can't end twice while the server waits
+        this.characterAbility.inputEnabled = this.allyButton.inputEnabled = this.enemyButton.inputEnabled = this.endButton.inputEnabled = false;
+    },
+    
+    startTurn: function(data) {
+        console.log('A new turn started');
+        this.updateData(data);
     }
 };

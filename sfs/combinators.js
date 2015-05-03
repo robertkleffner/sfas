@@ -1,3 +1,5 @@
+var sfas = null;
+
 module.exports = {
 
 // Each combinator has a play function of type (Match, Avatar, Avatar) -> Boolean
@@ -12,10 +14,12 @@ module.exports = {
 Separate: {
     name: "Separate",
     cost: 1,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        var auto = this.target.line.Pop();
+        var auto = target.line.Pop();
         for (var i = 0; i < auto.submatons.length; i++) {
-            this.target.line.Push(auto.submatons[i]);
+            target.line.Push(auto.submatons[i]);
         }
         return true;
     }
@@ -25,10 +29,12 @@ Separate: {
 Duplicate: {
     name: "Duplicate",
     cost: 2,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        var auto = this.target.line.Pop();
-        this.target.line.Push(auto.Copy());
-        this.target.line.Push(auto);
+        var auto = target.line.Pop();
+        target.line.Push(auto.Copy());
+        target.line.Push(auto);
         return true;
     }
 },
@@ -37,12 +43,14 @@ Duplicate: {
 Swap: {
     name: "Swap",
     cost: 1,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        if (this.target.line.Length() < 2) { return false; }
-        var auto1 = this.target.line.Pop();
-        var auto2 = this.target.line.Pop();
-        this.target.line.Push(auto1);
-        this.target.line.Push(auto2);
+        if (target.line.Length() < 2) { return false; }
+        var auto1 = target.line.Pop();
+        var auto2 = target.line.Pop();
+        target.line.Push(auto1);
+        target.line.Push(auto2);
         return true;
     }
 },
@@ -51,14 +59,16 @@ Swap: {
 Subvert: {
     name: "Subvert",
     cost: 2,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        if (this.target.line.Length() < 2) { return false; }
-        var auto1 = this.target.line.Pop();
-        var auto2 = this.target.line.Pop();
+        if (target.line.Length() < 2) { return false; }
+        var auto1 = target.line.Pop();
+        var auto2 = target.line.Pop();
         for (var i = 0; i < auto1.submatons.length; i++) {
-            this.target.line.Push(auto2.submatons[i]);
+            target.line.Push(auto2.submatons[i]);
         }
-        this.target.line.Push(auto1);
+        target.line.Push(auto1);
         return true;
     }
 },
@@ -67,11 +77,13 @@ Subvert: {
 Combine: {
     name: "Combine",
     cost: 3,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        if (this.target.line.Length() < 2) { return false; }
-        var auto1 = this.target.line.Pop();
-        var auto2 = this.target.line.Pop();
-        this.target.line.Push(new Automaton(auto2.submatons.concat(auto1.submatons)));
+        if (target.line.Length() < 2) { return false; }
+        var auto1 = target.line.Pop();
+        var auto2 = target.line.Pop();
+        target.line.Push(new sfas.Automaton(auto2.submatons.concat(auto1.submatons)));
         return true;
     }
 },
@@ -80,9 +92,11 @@ Combine: {
 Shield: {
     name: 'Shield',
     cost: 1,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        var auto1 = this.target.line.Pop();
-        this.target.line.Push(new Automaton([auto1]));
+        var auto1 = target.line.Pop();
+        target.line.Push(new sfas.Automaton([auto1]));
         return true;
     }
 },
@@ -91,8 +105,10 @@ Shield: {
 Zap: {
     name: 'Zap',
     cost: 2,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        this.target.line.Pop();
+        target.line.Pop();
         return true;
     }
 },
@@ -101,11 +117,13 @@ Zap: {
 Prepend: {
     name: 'Prepend',
     cost: 2,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        var auto1 = this.target.line.Pop();
-        var auto2 = this.target.line.Pop();
-        this.auto1.submatons.unshift(auto2);
-        this.target.line.Push(auto1);
+        var auto1 = target.line.Pop();
+        var auto2 = target.line.Pop();
+        auto1.submatons.unshift(auto2);
+        target.line.Push(auto1);
         return true;
     }
 },
@@ -115,9 +133,11 @@ Prepend: {
 // -> [A]
 Spawn: {
     name: 'Spawn',
-    cost: 2,
+    cost: 1,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        this.target.line.Push(new Automaton());
+        target.line.Push(new sfas.Automaton());
         return true;
     }
 },
@@ -126,13 +146,15 @@ Spawn: {
 Repetition: {
     name: 'Repetition',
     cost: 2,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        var auto1 = this.target.line.Pop();
+        var auto1 = target.line.Pop();
         for (var i = 0; i < auto1.submatons.length; i++) {
-            this.target.line.Push(auto1.submatons[i]);
+            target.line.Push(auto1.submatons[i]);
         }
         for (var i = 0; i < auto1.submatons.length; i++) {
-            this.target.line.Push(auto1.submatons[i].Copy());
+            target.line.Push(auto1.submatons[i].Copy());
         }
         return true;
     }
@@ -142,12 +164,14 @@ Repetition: {
 Reincarnate: {
     name: 'Reincarnate',
     cost: 3,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        var auto1 = this.target.line.Pop();
+        var auto1 = target.line.Pop();
         for (var i = 0; i < auto1.submatons.length; i++) {
-            this.target.line.Push(auto1.submatons[i]);
+            target.line.Push(auto1.submatons[i]);
         }
-        this.target.line.Push(auto1);
+        target.line.Push(auto1);
         return true;
     }
 },
@@ -157,9 +181,11 @@ Reincarnate: {
 Consume: {
     name: 'Consume',
     cost: 4,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        this.target.line.Pop();
-        this.owner.AddHealth(5);
+        target.line.Pop();
+        owner.AddHealth(5);
         return true;
     }
 },
@@ -168,11 +194,13 @@ Consume: {
 Chomp: {
     name: 'Chomp',
     cost: 8,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        if (this.target.line.Length() < 2) { return false; }
-        this.target.line.Pop();
-        this.target.line.Pop();
-        this.owner.AddHealth(10);
+        if (target.line.Length() < 2) { return false; }
+        target.line.Pop();
+        target.line.Pop();
+        owner.AddHealth(10);
         return true;
     }
 },
@@ -181,12 +209,14 @@ Chomp: {
 Kappa: {
     name: 'Kappa',
     cost: 3,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        if (this.target.line.Length() < 2) { return false; }
-        var auto = this.target.line.Pop();
-        this.target.line.Pop();
+        if (target.line.Length() < 2) { return false; }
+        var auto = target.line.Pop();
+        target.line.Pop();
         for (var i = 0; i < auto.submatons.length; i++) {
-            this.target.line.Push(auto.submatons[i]);
+            target.line.Push(auto.submatons[i]);
         }
         return true;
     }
@@ -196,12 +226,14 @@ Kappa: {
 Hoist: {
     name: 'Hoist',
     cost: 2,
+    description: 'NA',
+    image: 'minion',
     Play: function(match, owner, target) {
-        if (this.target.line.Length() < 2) { return false; }
-        this.target.line.Pop();
-        var auto = this.target.line.Pop();
+        if (target.line.Length() < 2) { return false; }
+        target.line.Pop();
+        var auto = target.line.Pop();
         for (var i = 0; i < auto.submatons.length; i++) {
-            this.target.line.Push(auto.submatons[i]);
+            target.line.Push(auto.submatons[i]);
         }
         return true;
     }
@@ -211,15 +243,19 @@ Hoist: {
 TheGear: {
     name: 'The Gear',
     cost: 0,
+    description: 'Give your character 1 extra gear this turn',
+    image: 'minion',
     Play: function(match, owner, target) {
-        this.owner.AddGears(1);
+        owner.AddGears(1);
+        return true;
     }
 },
 
 // Collections of the combinators
 All: [],
 
-Initialize: function() {
+Initialize: function(sfs) {
+    sfas = sfs;
     this.All = [
         this.Separate,
         this.Duplicate,

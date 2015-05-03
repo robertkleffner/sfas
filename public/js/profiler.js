@@ -89,7 +89,7 @@ profiler.prototype = {
             this.currPlayer.text = this.players.pop();
             return;
         }
-        sfas.game.ConnectPlayer(sprite.children[0].text);
+        //sfas.game.ConnectPlayer(sprite.children[0].text);
         this.game.state.start("Battle");
     },
 

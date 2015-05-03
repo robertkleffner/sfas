@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Game</title>
+  <title>Song for a System</title>
   <script src="js/phaser.min.js"></script>
 
   <script src="js/battle.js"></script>
@@ -41,6 +41,18 @@
 
       game.socket.on('match started', function(data) {
           game.state.start('Battle', true, false, data);
+      });
+      
+      game.socket.on('start turn', function(data) {
+          game.state.getCurrentState().startTurn(data);
+      });
+      
+      game.socket.on('post action', function(data) {
+          game.state.getCurrentState().updateData(data);
+      });
+      
+      game.socket.on('cant play card', function() {
+          alert('Couldn\'t play the card...');
       });
     })();
   </script>

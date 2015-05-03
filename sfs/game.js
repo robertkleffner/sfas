@@ -56,12 +56,17 @@ Game: function() {
 Match: function() {
     this.firstPlayer = null;
     this.secondPlayer = null;
+    this.activePlayer = null;
 
     this.StartMatch = function() {
         this.firstPlayer.match = this;
         this.secondPlayer.match = this;
+        this.activePlayer = this.firstPlayer;
+        
         this.firstPlayer.avatar.opponent = this.secondPlayer.avatar;
         this.secondPlayer.avatar.opponent = this.firstPlayer.avatar;
+        this.firstPlayer.avatar.player = this.firstPlayer;
+        this.secondPlayer.avatar.player = this.secondPlayer;
 
         console.log('Match started between ' + this.firstPlayer.name + ' and ' + this.secondPlayer.name);
 
@@ -73,14 +78,20 @@ Match: function() {
         this.firstPlayer.avatar.DrawCard().DrawCard().DrawCard();
         this.secondPlayer.avatar.DrawCard().DrawCard().DrawCard().DrawCard();
         this.secondPlayer.avatar.hand.push(cards.TheGear);
+        
+        console.log('Giving first player a gear...');
+        this.firstPlayer.avatar.IncrementMaxGears();
+        this.firstPlayer.avatar.RefillGears();
+        
+        console.log('Giving each player an automaton');
+        this.ReplenishBoth();
 
         console.log(this.firstPlayer.name + ' starting hand: ');
         console.log(this.firstPlayer.avatar.hand);
         console.log(this.secondPlayer.name + ' starting hand: ');
         console.log(this.secondPlayer.avatar.hand);
 
-        this.firstPlayer.socket.emit('match started', this.Distill(true));
-        this.secondPlayer.socket.emit('match started', this.Distill(false));
+        this.SendUpdate('match started');
     };
 
     this.AssignPlayer = function(player) {
@@ -99,13 +110,54 @@ Match: function() {
             }
         }
     };
+    
+    this.EndTurn = function() {
+        // Swap the active players
+        console.log(this.activePlayer.name + ' ended their turn.');
+        if (this.activePlayer.id == this.firstPlayer.id) {
+            this.activePlayer = this.secondPlayer;
+        } else {
+            this.activePlayer = this.firstPlayer;
+        }
+        
+        // New active player draws a card
+        this.activePlayer.avatar.DrawCard();
+        // New active player gains a gear
+        this.activePlayer.avatar.IncrementMaxGears();
+        // Refill all used gears
+        this.activePlayer.avatar.RefillGears();
+        
+        this.SendUpdate('start turn');
+    };
+    
+    this.CheckGameOver = function() {
+        if (this.firstPlayer.avatar.health <= 0) {
+            this.firstPlayer.socket.emit('game over', 'loss');
+            this.secondPlayer.socket.emit('game over', 'win');
+            return;
+        }
+        if (this.secondPlayer.avatar.health <= 0) {
+            this.secondPlayer.socket.emit('game over', 'loss');
+            this.firstPlayer.socket.emit('game over', 'win');
+        }
+    };
+    
+    this.SendUpdate = function(msg) {
+        this.firstPlayer.socket.emit(msg, this.Distill(true));
+        this.secondPlayer.socket.emit(msg, this.Distill(false));
+    };
+    
+    this.ReplenishBoth = function() {
+        this.firstPlayer.avatar.ReplenishLine();
+        this.secondPlayer.avatar.ReplenishLine();
+    };
 
     // Distill's the game data into a nice neat package to send across the server
     this.Distill = function(first) {
         if (first) {
-            return { player: this.firstPlayer.Distill(), opponent: this.secondPlayer.Distill() };
+            return { player: this.firstPlayer.Distill(), opponent: this.secondPlayer.Distill(), active: this.activePlayer.id  };
         } else {
-            return { player: this.secondPlayer.Distill(), opponent: this.firstPlayer.Distill() };
+            return { player: this.secondPlayer.Distill(), opponent: this.firstPlayer.Distill(), active: this.activePlayer.id };
         }
     };
 },
@@ -158,22 +210,30 @@ Avatar: function(deck, character) {
     this.hand = [];
     this.health = utils.MAXIMUM_AVATAR_HEALTH;
     this.character = character;
-    this.activeGears = 1;
-    this.maxGears = 1;
+    this.activeGears = 0;
+    this.maxGears = 0;
     this.opponent = null;
     this.line = new sfs.Line();
     this.fatigue = 1;
+    this.player = null;
 
     // Used at the end of each turn to give each player another gear,
     // up to MAXIMUM_GEARS.
     this.IncrementMaxGears = function() {
+        console.log('Incrementing maximum gears.');
         if (this.maxGears >= utils.MAXIMUM_GEARS) { return; }
         this.maxGears += 1;
+    };
+    
+    this.RefillGears = function() {
+        console.log('Refilling gears.');
+        this.activeGears = this.maxGears;
     };
 
     // Used to give a player a number of extra gears, like when playing
     // The Gear (combinator)
     this.AddGears = function(amount) {
+        console.log('Adding ' + amount + ' gears this turn');
         this.activeGears += amount;
         if (this.activeGears >= utils.MAXIMUM_GEARS) {
             this.activeGears = utils.MAXIMUM_GEARS;
@@ -181,7 +241,7 @@ Avatar: function(deck, character) {
         return this;
     };
 
-    this.AddHealth = function(amount) {
+    this.ChangeHealth = function(amount) {
         this.health += amount;
         if (this.health >= utils.MAXIMUM_AVATAR_HEALTH) {
             this.health = utils.MAXIMUM_AVATAR_HEALTH;
@@ -196,12 +256,58 @@ Avatar: function(deck, character) {
             // each draw
             this.health -= this.fatigue;
             this.fatigue += 1;
+            console.log('Took ' + this.fatigue + ' fatigue damage from drawing.');
         } else if (this.hand.length >= utils.MAXIMUM_CARDS_IN_HAND) {
             this.deck.cards.pop();
+            console.log('Hand too full: discarding drawn card.');
         } else {
+            console.log('Drew a card.');
             this.hand.push(this.deck.cards.pop());
         }
         return this;
+    };
+    
+    this.PlayCard = function(index, ally) {
+        var card = this.hand.splice(index, 1)[0];
+        this.activeGears -= card.cost;
+        console.log('Playing card ' + card.name);
+        if (card.Play(this.player.match, this, ally ? this : this.opponent)) {
+            this.player.match.ReplenishBoth();
+            this.player.match.SendUpdate('post action');
+        } else {
+            this.player.socket.emit('cant play card');
+        }
+    };
+    
+    this.CharacterPower = function() {
+        this.activeGears -= 2;
+        if (this.character == utils.DE_BORG) {
+            var automaton = new sfs.Automaton();
+            automaton.energy = 3;
+            this.line.Push(automaton);
+        }
+        if (this.character == utils.BABBOCK) {
+            var automaton = new sfs.Automaton();
+            automaton.durability = 3;
+            this.line.Push(automaton);
+        }
+        if (this.character == utils.VAN_NEWMAN) {
+            var automaton = new sfs.Automaton();
+            automaton.energy = automaton.durability = 2;
+            this.line.Push(automaton);
+        }
+        if (this.character == utils.MCCREARY) {
+            this.line.Push(new sfs.Automaton());
+            this.line.Push(new sfs.Automaton());
+        }
+        
+        this.player.match.SendUpdate('post action');
+    };
+    
+    this.ReplenishLine = function() {
+        if (this.line.Length() < 1) {
+            this.line.Push(new sfs.Automaton());
+        }
     };
 
     this.Distill = function() {
@@ -263,7 +369,7 @@ Automaton: function(submatons) {
             subs.push(this.submatons[i].Copy());
         }
         return new sfs.Automaton(subs);
-    }
+    };
 },
 
 // This class represents a constructed deck.
@@ -321,6 +427,6 @@ Deck: function(name) {
     };
 },
 
-}
+};
 
 var sfs = module.exports;

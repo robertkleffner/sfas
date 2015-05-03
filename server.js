@@ -39,10 +39,26 @@ io.on('connection', function(socket){
         console.log('Avatar ' + avatarId + ' chosen for ' + player.name);
         game.EnqueuePlayer(player, avatarId, 0);
     });
+    
+    socket.on('end turn', function() {
+        player.match.EndTurn();
+    });
+    
+    socket.on('play card on ally', function(cardIndex) {
+        player.avatar.PlayCard(cardIndex, true);
+    });
+    
+    socket.on('play card on enemy', function(cardIndex) {
+        player.avatar.PlayCard(cardIndex, false);
+    });
+    
+    socket.on('character power', function() {
+        player.avatar.CharacterPower();
+    });
 });
 
 server.listen(serverPort, function() {
-    cards.Initialize();
     game = new sfs.Game();
+    cards.Initialize(sfs);
     console.log('listening on *:' + serverPort);
 });
