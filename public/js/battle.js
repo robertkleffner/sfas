@@ -296,7 +296,7 @@ battle.prototype = {
                 if (this.data.player.avatar.activeGears < card.cost) {
                     alert('Not enough gears to play ' + card.name);
                 } else {
-                    this.game.socket.emit('play card on ally', i);
+                    this.game.socket.send(JSON.stringify({type:'play card on ally',data:i}));
                 }
             }
         }
@@ -309,7 +309,7 @@ battle.prototype = {
                 if (this.data.player.avatar.activeGears < card.cost) {
                     alert('Not enough gears to play ' + card.name);
                 } else {
-                    this.game.socket.emit('play card on enemy', i);
+                    this.game.socket.send(JSON.stringify({type:'play card on enemy',data:i}));
                 }
             }
         }
@@ -319,12 +319,12 @@ battle.prototype = {
         if (this.data.player.avatar.activeGears < 2) {
             alert('Not enough gears to use character power!');
         } else {
-            this.game.socket.emit('character power');
+            this.game.socket.send(JSON.stringify({type:'character power'}));
         }
     },
     
     endTurn: function(sprite) {
-        this.game.socket.emit('end turn');
+        this.game.socket.send(JSON.stringify({type:'end turn'}));
         // disable buttons so player's can't end twice while the server waits
         this.characterAbility.inputEnabled = this.allyButton.inputEnabled = this.enemyButton.inputEnabled = this.endButton.inputEnabled = false;
     },

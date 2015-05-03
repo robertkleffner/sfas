@@ -98,7 +98,7 @@ profiler.prototype = {
     },
 
     choose: function(avatar) {
-        this.game.socket.emit('choose avatar', avatar);
+        this.game.socket.send(JSON.stringify({type:'choose avatar',data:avatar}));
         this.portraits[avatar].tint = 0x00ff00;
         // disable other portraits
         this.portraits.map(function(p) { p.events.onInputDown.removeAll(); });

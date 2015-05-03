@@ -132,19 +132,17 @@ Match: function() {
     
     this.CheckGameOver = function() {
         if (this.firstPlayer.avatar.health <= 0) {
-            this.firstPlayer.socket.emit('game over', 'loss');
-            this.secondPlayer.socket.emit('game over', 'win');
-            return;
-        }
-        if (this.secondPlayer.avatar.health <= 0) {
-            this.secondPlayer.socket.emit('game over', 'loss');
-            this.firstPlayer.socket.emit('game over', 'win');
+            this.secondPlayer.socket.send(JSON.stringify({type:'game win'}));
+            this.firstPlayer.socket.send(JSON.stringify({type:'game loss'}));
+        } else if (this.secondPlayer.avatar.health <= 0) {
+            this.secondPlayer.socket.send(JSON.stringify({type:'game loss'}));
+            this.firstPlayer.socket.send(JSON.stringify({type:'game win'}));
         }
     };
     
     this.SendUpdate = function(msg) {
-        this.firstPlayer.socket.emit(msg, this.Distill(true));
-        this.secondPlayer.socket.emit(msg, this.Distill(false));
+        this.firstPlayer.socket.send(JSON.stringify({type:msg, data:this.Distill(true)}));
+        this.secondPlayer.socket.send(JSON.stringify({type:msg, data:this.Distill(false)}));
     };
     
     this.ReplenishBoth = function() {
@@ -275,7 +273,7 @@ Avatar: function(deck, character) {
             this.player.match.ReplenishBoth();
             this.player.match.SendUpdate('post action');
         } else {
-            this.player.socket.emit('cant play card');
+            this.player.socket.send(JSON.stringify({type:'cant play card'}));
         }
     };
     

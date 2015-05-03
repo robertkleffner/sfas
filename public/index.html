@@ -9,13 +9,13 @@
   <script src="js/splash.js"></script>
   <script src="js/profiler.js"></script>
 
-  <script src="/socket.io/socket.io.js"></script>
-
   <link rel="stylesheet" href="css/default.css">
 </head>
 <body>
   <script>
     (function () {
+      var host = location.origin.replace(/^http/, 'ws');
+      
       var game = new Phaser.Game(640, 360, Phaser.AUTO, "game");
       game.state.add("Splash", splash);
       game.state.add("Profiler", profiler);
@@ -37,23 +37,25 @@
           avatarMap: ['babbock', 'de_borg', 'van_newman', 'mccreary']
       };
 
-      game.socket = io();
-
-      game.socket.on('match started', function(data) {
-          game.state.start('Battle', true, false, data);
-      });
+      game.socket = new WebSocket(host);
       
-      game.socket.on('start turn', function(data) {
-          game.state.getCurrentState().startTurn(data);
-      });
-      
-      game.socket.on('post action', function(data) {
-          game.state.getCurrentState().updateData(data);
-      });
-      
-      game.socket.on('cant play card', function() {
-          alert('Couldn\'t play the card...');
-      });
+      game.socket.onmessage = function (event) {
+          var packet = JSON.parse(event.data);
+          switch (packet.type) {
+              case 'match started':
+                  game.state.start('Battle', true, false, packet.data);
+                  break;
+              case 'start turn':
+                  game.state.getCurrentState().startTurn(packet.data);
+                  break;
+              case 'post action':
+                  game.state.getCurrentState().updateData(packet.data);
+                  break;
+              case 'cant play card':
+                  alert('Couldn\'t play the card...');
+                  break;
+          }
+      };
     })();
   </script>
 </body>
