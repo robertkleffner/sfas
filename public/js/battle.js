@@ -24,10 +24,10 @@ battle.prototype = {
         this.game.load.image('kappa', 'assets/icons/kappa.png');
         this.game.load.image('hoist', 'assets/icons/trebuchet.png');
         this.game.load.image('minion', 'assets/creatures/vintage-robot.png');
-        this.game.load.image('profile', 'assets/abilities/iron-mask.png');
-        this.game.load.image('profile_enemy', 'assets/abilities/iron-mask.png');
-        this.game.load.image('ability', 'assets/abilities/auto-repair.png');
-        this.game.load.image('enemy_ability', 'assets/abilities/auto-repair.png');
+        this.game.load.image('profile', 'assets/ability/iron-mask.png');
+        this.game.load.image('profile_enemy', 'assets/ability/iron-mask.png');
+        this.game.load.image('ability', 'assets/ability/auto-repair.png');
+        this.game.load.image('enemy_ability', 'assets/ability/auto-repair.png');
 
         this.game.load.image('babbock', 'assets/avatars/babbock.jpg');
         this.game.load.image('de_borg', 'assets/avatars/de_borg.jpg');
