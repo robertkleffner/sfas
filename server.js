@@ -59,6 +59,12 @@ wss.on('connection', function(socket){
             case 'character power':
                 player.avatar.CharacterPower();
                 break;
+            case 'attack automaton':
+                player.avatar.AttackEnemyAutomaton(packet.attacking, packet.target);
+                break;
+            case 'attack hero':
+                player.avatar.AttackCharacter(packet.attacking);
+                break;
             default:
                 console.log('Unknown server event received: ' + packet.type);
         }

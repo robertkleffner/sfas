@@ -9,6 +9,20 @@ battle.prototype = {
         this.game.load.image('cog', 'assets/icons/cog.png');
         this.game.load.image('heart', 'assets/icons/mineral-heart.png');
         this.game.load.image('attack', 'assets/icons/overdrive.png');
+        this.game.load.image('swap', 'assets/icons/trade.png');
+        this.game.load.image('separate', 'assets/icons/unplugged.png');
+        this.game.load.image('duplicate', 'assets/icons/materials-science.png');
+        this.game.load.image('subvert', 'assets/icons/cctv-camera.png');
+        this.game.load.image('combine', 'assets/icons/cog-lock.png');
+        this.game.load.image('shield', 'assets/icons/bordered-shield.png');
+        this.game.load.image('zap', 'assets/icons/cogsplosion.png');
+        this.game.load.image('prepend', 'assets/icons/abstract-057.png');
+        this.game.load.image('repetition', 'assets/icons/over-infinity.png');
+        this.game.load.image('reincarnate', 'assets/icons/eagle-emblem.png');
+        this.game.load.image('consume', 'assets/icons/gluttony.png');
+        this.game.load.image('chomp', 'assets/icons/bestial-fangs.png');
+        this.game.load.image('kappa', 'assets/icons/kappa.png');
+        this.game.load.image('hoist', 'assets/icons/trebuchet.png');
         this.game.load.image('minion', 'assets/creatures/vintage-robot.png');
         this.game.load.image('profile', 'assets/abilities/iron-mask.png');
         this.game.load.image('profile_enemy', 'assets/abilities/iron-mask.png');
@@ -27,6 +41,7 @@ battle.prototype = {
         this.allyLine = [];
         this.opponentLine = [];
         this.created = false;
+        this.abilityEnabled = true;
 
         console.log('Battle commencing!');
         this.updateData(data);
@@ -74,6 +89,9 @@ battle.prototype = {
         this.enemyProfile = this.game.add.sprite(582, 10, this.game.utils.avatarMap[this.data.opponent.avatar.character]);
         this.enemyProfile.scale.setTo(0.44, 0.44);
         this.enemyProfile.tint = this.data.player.id != this.data.active ? 0x00ffff : 0xffffff;
+        this.enemyProfile.inputEnabled = true;
+        this.enemyProfile.useHandCursor = true;
+        this.enemyProfile.events.onInputDown.add(this.characterProfileClick.bind(this));
 
         this.game.add.sprite(530, 5, 'heart').scale.setTo(0.05, 0.05);
         this.enemyHealth = this.game.add.text(555, 5, this.data.opponent.avatar.health, {fontSize: '20px', fill: '#F00'});
@@ -133,6 +151,7 @@ battle.prototype = {
             this.allyProfile.tint = isActive ? 0x00ffff : 0xffffff;
             this.enemyProfile.tint = this.data.opponent.id == this.data.active ? 0x00ffff : 0xffffff;
             this.characterAbility.inputEnabled = this.allyButton.inputEnabled = this.enemyButton.inputEnabled = this.endButton.inputEnabled = isActive;
+            if (!this.abilityEnabled) {this.characterAbility.inputEnabled = false;}
             this.allyHealth.text = this.data.player.avatar.health + '';
             this.enemyHealth.text = this.data.opponent.avatar.health + '';
             this.activeGears.text = this.data.player.avatar.activeGears + '';
@@ -210,6 +229,11 @@ battle.prototype = {
             cardBackBox.ctx.fill();
             
             var back = this.game.add.sprite(this.startHandPositionX + i *48, startLinePosY, cardBackBox);
+            if (this.data.player.id == this.data.active && automaton.canAttack) {
+                back.inputEnabled = true;
+                back.useHandCursor = true;
+                back.events.onInputDown.add(this.toggleAutomaton.bind(this, card));
+            }
             var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startLinePosY, 'minion');
             cardImage.scale.setTo(.09,.09);
             var health = this.game.add.text(this.startHandPositionX + 3 + i*48, startLinePosY + 45,automaton.durability+'', {fontSize: '12px', fill: '#f00'});
@@ -219,6 +243,14 @@ battle.prototype = {
             card.add(cardImage);
             card.add(health);
             card.add(attack);
+            card.select = (function(sprite) { this.selected = true; sprite.tint = 0xffff00; }).bind(card, back);
+            card.deselect = (function(sprite) { this.selected = false; sprite.tint = 0xffffff; }).bind(card, back);
+            card.selected = false;
+            card.disable = (function(sprite) {
+                this.selected = false;
+                sprite.tint = 0xffffff;
+                sprite.inputEnabled = false;
+                sprite.useHandCursor = false; }).bind(card, back);
             this.allyLine.push(card);
         }
 
@@ -235,6 +267,10 @@ battle.prototype = {
             cardBackBox.ctx.fill();
             
             var back = this.game.add.sprite(this.startHandPositionX + i *48, startEnemyLinePoxY, cardBackBox);
+            back.inputEnabled = true;
+            back.useHandCursor = true;
+            back.events.onInputDown.add(this.enemyAutomatonClick.bind(this, this.data.player.avatar.hand[i]), this);
+
             var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startEnemyLinePoxY, 'minion');
             cardImage.scale.setTo(.09,.09);
             var health = this.game.add.text(this.startHandPositionX + 3 + i*48, startEnemyLinePoxY + 45, automaton.durability+'', {fontSize: '12px', fill: '#f00'});
@@ -314,11 +350,41 @@ battle.prototype = {
             }
         }
     },
+
+    toggleAutomaton: function(automaton) {
+        if (automaton.selected) {
+            automaton.deselect();
+        } else {
+            for (var i = 0; i < this.allyLine.length; i++) {
+                this.allyLine[i].deselect();
+            }
+            automaton.select();
+        }
+    },
+
+    enemyAutomatonClick: function(enemyIndex) {
+        for (var i = 0; i < this.allyLine.length; i++) {
+            if (this.allyLine[i].selected) {
+                this.game.socket.send(JSON.stringify({type:'attack automaton', attacking:i, target:enemyIndex}));
+                this.allyLine[i].disable();
+            }
+        }
+    },
+
+    characterProfileClick: function() {
+        for (var i = 0; i < this.allyLine.length; i++) {
+            if (this.allyLine[i].selected) {
+                this.game.socket.send(JSON.stringify({type:'attack hero', attacking:i}));
+                this.allyLine[i].disable();
+            }
+        }
+    },
     
     characterPower: function() {
         if (this.data.player.avatar.activeGears < 2) {
             alert('Not enough gears to use character power!');
         } else {
+            this.abilityEnabled = false;
             this.game.socket.send(JSON.stringify({type:'character power'}));
         }
     },
@@ -331,6 +397,7 @@ battle.prototype = {
     
     startTurn: function(data) {
         console.log('A new turn started');
+        this.abilityEnabled = true;
         this.updateData(data);
     }
 };

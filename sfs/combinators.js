@@ -14,9 +14,10 @@ module.exports = {
 Separate: {
     name: "Separate",
     cost: 1,
-    description: 'NA',
-    image: 'minion',
+    description: '[A] -> A',
+    image: 'separate',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         var auto = target.line.Pop();
         for (var i = 0; i < auto.submatons.length; i++) {
             target.line.Push(auto.submatons[i]);
@@ -29,9 +30,10 @@ Separate: {
 Duplicate: {
     name: "Duplicate",
     cost: 2,
-    description: 'NA',
-    image: 'minion',
+    description: 'Deep copy of first element on the stack',
+    image: 'duplicate',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         var auto = target.line.Pop();
         target.line.Push(auto.Copy());
         target.line.Push(auto);
@@ -43,8 +45,8 @@ Duplicate: {
 Swap: {
     name: "Swap",
     cost: 1,
-    description: 'NA',
-    image: 'minion',
+    description: 'Swap the first two items in the stack',
+    image: 'swap',
     Play: function(match, owner, target) {
         if (target.line.Length() < 2) { return false; }
         var auto1 = target.line.Pop();
@@ -59,8 +61,8 @@ Swap: {
 Subvert: {
     name: "Subvert",
     cost: 2,
-    description: 'NA',
-    image: 'minion',
+    description: 'Debuffs or eliminates second element',
+    image: 'subvert',
     Play: function(match, owner, target) {
         if (target.line.Length() < 2) { return false; }
         var auto1 = target.line.Pop();
@@ -77,8 +79,8 @@ Subvert: {
 Combine: {
     name: "Combine",
     cost: 3,
-    description: 'NA',
-    image: 'minion',
+    description: '[B] [A] -> [B A]',
+    image: 'combine',
     Play: function(match, owner, target) {
         if (target.line.Length() < 2) { return false; }
         var auto1 = target.line.Pop();
@@ -92,9 +94,10 @@ Combine: {
 Shield: {
     name: 'Shield',
     cost: 1,
-    description: 'NA',
-    image: 'minion',
+    description: 'Add a (1, 1) buff to the minion on the top of the stack',
+    image: 'shield',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         var auto1 = target.line.Pop();
         target.line.Push(new sfas.Automaton([auto1]));
         return true;
@@ -105,9 +108,10 @@ Shield: {
 Zap: {
     name: 'Zap',
     cost: 2,
-    description: 'NA',
-    image: 'minion',
+    description: 'Kill the minion on the top of the stack',
+    image: 'zap',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         target.line.Pop();
         return true;
     }
@@ -117,13 +121,13 @@ Zap: {
 Prepend: {
     name: 'Prepend',
     cost: 2,
-    description: 'NA',
-    image: 'minion',
+    description: '[B] [A] -> [[B] A]',
+    image: 'prepend',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 2) {return false;}
         var auto1 = target.line.Pop();
         var auto2 = target.line.Pop();
-        auto1.submatons.unshift(auto2);
-        target.line.Push(auto1);
+        target.line.Push(new sfas.Automaton([auto2].concat(auto1.submatons)));
         return true;
     }
 },
@@ -134,7 +138,7 @@ Prepend: {
 Spawn: {
     name: 'Spawn',
     cost: 1,
-    description: 'NA',
+    description: 'Create a (1, 1) minion',
     image: 'minion',
     Play: function(match, owner, target) {
         target.line.Push(new sfas.Automaton());
@@ -146,9 +150,10 @@ Spawn: {
 Repetition: {
     name: 'Repetition',
     cost: 2,
-    description: 'NA',
-    image: 'minion',
+    description: '[A] -> A A',
+    image: 'repetition',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         var auto1 = target.line.Pop();
         for (var i = 0; i < auto1.submatons.length; i++) {
             target.line.Push(auto1.submatons[i]);
@@ -164,9 +169,10 @@ Repetition: {
 Reincarnate: {
     name: 'Reincarnate',
     cost: 3,
-    description: 'NA',
-    image: 'minion',
+    description: '[A] -> A [A]',
+    image: 'reincarnate',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         var auto1 = target.line.Pop();
         for (var i = 0; i < auto1.submatons.length; i++) {
             target.line.Push(auto1.submatons[i]);
@@ -181,9 +187,10 @@ Reincarnate: {
 Consume: {
     name: 'Consume',
     cost: 4,
-    description: 'NA',
-    image: 'minion',
+    description: 'Destroys top item adding 5 health to ally hero',
+    image: 'consume',
     Play: function(match, owner, target) {
+        if (target.line.Length() < 1) { return false; }
         target.line.Pop();
         owner.ChangeHealth(5);
         return true;
@@ -194,8 +201,8 @@ Consume: {
 Chomp: {
     name: 'Chomp',
     cost: 8,
-    description: 'NA',
-    image: 'minion',
+    description: 'Destroy top two minions adding 10 health to ally',
+    image: 'chomp',
     Play: function(match, owner, target) {
         if (target.line.Length() < 2) { return false; }
         target.line.Pop();
@@ -209,8 +216,8 @@ Chomp: {
 Kappa: {
     name: 'Kappa',
     cost: 3,
-    description: 'NA',
-    image: 'minion',
+    description: '[B] [A] -> A',
+    image: 'kappa',
     Play: function(match, owner, target) {
         if (target.line.Length() < 2) { return false; }
         var auto = target.line.Pop();
@@ -226,8 +233,8 @@ Kappa: {
 Hoist: {
     name: 'Hoist',
     cost: 2,
-    description: 'NA',
-    image: 'minion',
+    description: '[B] [A] -> B',
+    image: 'hoist',
     Play: function(match, owner, target) {
         if (target.line.Length() < 2) { return false; }
         target.line.Pop();
@@ -244,7 +251,7 @@ TheGear: {
     name: 'The Gear',
     cost: 0,
     description: 'Give your character 1 extra gear this turn',
-    image: 'minion',
+    image: 'cog',
     Play: function(match, owner, target) {
         owner.AddGears(1);
         return true;

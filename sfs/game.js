@@ -126,6 +126,8 @@ Match: function() {
         this.activePlayer.avatar.IncrementMaxGears();
         // Refill all used gears
         this.activePlayer.avatar.RefillGears();
+
+        this.activePlayer.avatar.ActivateAutomatons();
         
         this.SendUpdate('start turn');
     };
@@ -134,10 +136,13 @@ Match: function() {
         if (this.firstPlayer.avatar.health <= 0) {
             this.secondPlayer.socket.send(JSON.stringify({type:'game win'}));
             this.firstPlayer.socket.send(JSON.stringify({type:'game loss'}));
+            return true;
         } else if (this.secondPlayer.avatar.health <= 0) {
             this.secondPlayer.socket.send(JSON.stringify({type:'game loss'}));
             this.firstPlayer.socket.send(JSON.stringify({type:'game win'}));
+            return true;
         }
+        return false;
     };
     
     this.SendUpdate = function(msg) {
@@ -150,7 +155,7 @@ Match: function() {
         this.secondPlayer.avatar.ReplenishLine();
     };
 
-    // Distill's the game data into a nice neat package to send across the server
+    // Distills the game data into a nice neat package to send across the server
     this.Distill = function(first) {
         if (first) {
             return { player: this.firstPlayer.Distill(), opponent: this.secondPlayer.Distill(), active: this.activePlayer.id  };
@@ -266,10 +271,11 @@ Avatar: function(deck, character) {
     };
     
     this.PlayCard = function(index, ally) {
-        var card = this.hand.splice(index, 1)[0];
-        this.activeGears -= card.cost;
+        var card = this.hand[index];
         console.log('Playing card ' + card.name);
         if (card.Play(this.player.match, this, ally ? this : this.opponent)) {
+            this.hand.splice(index, 1);
+            this.activeGears -= card.cost;
             this.player.match.ReplenishBoth();
             this.player.match.SendUpdate('post action');
         } else {
@@ -303,8 +309,40 @@ Avatar: function(deck, character) {
     };
     
     this.ReplenishLine = function() {
-        if (this.line.Length() < 1) {
+        /*if (this.line.Length() < 1) {
             this.line.Push(new sfs.Automaton());
+        }*/
+    };
+
+    this.ActivateAutomatons = function() {
+        for (var i = 0; i < this.line.automatons.length; i++) {
+            this.line.automatons[i].Activate();
+        }
+    };
+
+    this.AttackEnemyAutomaton = function(attacking, target) {
+        var attacker = this.line.automatons[attacking];
+        var victim = this.opponent.line.automatons[target];
+        victim.durability -= attacker.energy;
+        attacker.durability -= victim.energy;
+        if (victim.durability <= 0) {
+            // KILL IT WITH FIRE
+            this.opponent.line.automatons.splice(target, 1);
+        }
+        if (attacker.durability <= 0) {
+            // KILL IT WITH ICE
+            this.line.automatons.splice(attacking, 1);
+        } else {
+            attacker.canAttack = false;
+        }
+    };
+
+    this.AttackCharacter = function(attacking) {
+        var auto = this.line.automatons[attacking];
+        this.opponent.ChangeHealth(-1 * auto.energy);
+        auto.canAttack = false;
+        if (!this.player.match.CheckGameOver()) {
+            this.player.match.SendUpdate('post action');
         }
     };
 
@@ -330,7 +368,6 @@ Line: function() {
         // it means that left-most automatons can be destroyed if played
         // if there's already too many automatons on the line
         if (this.automatons.length < utils.MAXIMUM_LIVE_AUTOMATONS) {
-            auto.canAttack = true;
             this.automatons.unshift(auto);
         }
     };
@@ -367,6 +404,20 @@ Automaton: function(submatons) {
             subs.push(this.submatons[i].Copy());
         }
         return new sfs.Automaton(subs);
+    };
+
+    this.Activate = function() {
+        for (var i = 0; i < this.submatons.length; i++) {
+            this.submatons[i].Deactivate();
+        }
+        this.canAttack = true;
+    };
+
+    this.Deactivate = function() {
+        for (var i = 0; i < this.submatons.length; i++) {
+            this.submatons[i].Deactivate();
+        }
+        this.canAttack = false;
     };
 },
 
