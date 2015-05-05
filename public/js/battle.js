@@ -52,7 +52,7 @@ battle.prototype = {
     create: function(){
         console.log('Creating board');
         this.game.add.sprite(0, 0, 'match_background');
-
+        this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         this.setupAvatars();
         this.updateHand();
         this.createButtons();

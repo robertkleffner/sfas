@@ -8,7 +8,7 @@ splash.prototype = {
 
     create: function(){
         this.game.add.sprite(0, 0, 'gauges');
-
+        this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         this.game.stage.draggable = true;
         var playButton = this.game.add.button(320, 240, "play", this.play, this);
         playButton.scale.setTo(0.3, 0.3);
@@ -19,8 +19,9 @@ splash.prototype = {
 
     play: function(){
         this.game.state.start('Profiler');
+        this.game.scale.startFullScreen(false);
     },
-    
+
     update: function(){
 
     }

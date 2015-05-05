@@ -11,7 +11,7 @@ profiler.prototype = {
 
     create: function() {
         this.game.add.sprite(0, 0, 'gear_bg');
-
+        this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
         var title = this.game.add.text(320, 30, 'Choose your Character');
         title.anchor.set(0.5);
         title.stroke = '#ffffff';

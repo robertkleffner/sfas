@@ -171,6 +171,7 @@ Reincarnate: {
     cost: 3,
     description: '[A] -> A [A]',
     image: 'reincarnate',
+    //Todo: something here can attack
     Play: function(match, owner, target) {
         if (target.line.Length() < 1) { return false; }
         var auto1 = target.line.Pop();

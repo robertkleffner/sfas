@@ -15,6 +15,7 @@
 
     function create(){
         game.stage.backgroundColor = '#ddd';
+        game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
 
         // Base Board Setup
         var profileImage = game.add.sprite(5, 270, 'profile');
