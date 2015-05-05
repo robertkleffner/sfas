@@ -185,7 +185,7 @@ Consume: {
     image: 'minion',
     Play: function(match, owner, target) {
         target.line.Pop();
-        owner.AddHealth(5);
+        owner.ChangeHealth(5);
         return true;
     }
 },
@@ -200,7 +200,7 @@ Chomp: {
         if (target.line.Length() < 2) { return false; }
         target.line.Pop();
         target.line.Pop();
-        owner.AddHealth(10);
+        owner.ChangeHealth(10);
         return true;
     }
 },
