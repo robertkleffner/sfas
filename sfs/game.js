@@ -75,7 +75,7 @@ Match: function() {
         this.secondPlayer.avatar.deck.Shuffle();
 
         console.log('Drawing starting hand...');
-        this.firstPlayer.avatar.DrawCard().DrawCard().DrawCard();
+        this.firstPlayer.avatar.DrawCard().DrawCard().DrawCard().DrawCard();
         this.secondPlayer.avatar.DrawCard().DrawCard().DrawCard().DrawCard();
         this.secondPlayer.avatar.hand.push(cards.TheGear);
         
@@ -145,9 +145,9 @@ Match: function() {
         return false;
     };
     
-    this.SendUpdate = function(msg) {
-        this.firstPlayer.socket.send(JSON.stringify({type:msg, data:this.Distill(true)}));
-        this.secondPlayer.socket.send(JSON.stringify({type:msg, data:this.Distill(false)}));
+    this.SendUpdate = function(msg, card) {
+        this.firstPlayer.socket.send(JSON.stringify({type:msg, data:this.Distill(true, card)}));
+        this.secondPlayer.socket.send(JSON.stringify({type:msg, data:this.Distill(false, card)}));
     };
     
     this.ReplenishBoth = function() {
@@ -156,12 +156,20 @@ Match: function() {
     };
 
     // Distills the game data into a nice neat package to send across the server
-    this.Distill = function(first) {
+    this.Distill = function(first, card) {
+        var data;
         if (first) {
-            return { player: this.firstPlayer.Distill(), opponent: this.secondPlayer.Distill(), active: this.activePlayer.id  };
+            data = { player: this.firstPlayer.Distill(), opponent: this.secondPlayer.Distill(), active: this.activePlayer.id };
         } else {
-            return { player: this.secondPlayer.Distill(), opponent: this.firstPlayer.Distill(), active: this.activePlayer.id };
+            data = { player: this.secondPlayer.Distill(), opponent: this.firstPlayer.Distill(), active: this.activePlayer.id };
         }
+        
+        if (card) {
+            data.playedCard = card;
+        } else {
+            data.playedCard = null;
+        }
+        return data;
     };
 },
 
@@ -277,7 +285,7 @@ Avatar: function(deck, character) {
             this.hand.splice(index, 1);
             this.activeGears -= card.cost;
             this.player.match.ReplenishBoth();
-            this.player.match.SendUpdate('post action');
+            this.player.match.SendUpdate('post action', card);
         } else {
             this.player.socket.send(JSON.stringify({type:'cant play card'}));
         }
@@ -335,6 +343,7 @@ Avatar: function(deck, character) {
         } else {
             attacker.canAttack = false;
         }
+        this.player.match.SendUpdate('post action');
     };
 
     this.AttackCharacter = function(attacking) {

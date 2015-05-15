@@ -1,0 +1,6 @@
+1. Install node.js (nodejs.org)
+2. In a terminal, cd into this directory
+3. Run `npm install`
+4. Run `node server.js`
+5. Point two browser windows to `localhost:5000`
+6. Profit

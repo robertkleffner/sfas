@@ -156,6 +156,10 @@ battle.prototype = {
             this.enemyHealth.text = this.data.opponent.avatar.health + '';
             this.activeGears.text = this.data.player.avatar.activeGears + '';
             this.maxGears.text = this.data.player.avatar.maxGears + '';
+            
+            if (this.data.playedCard) {
+                this.showCardPreview(this.data.playedCard);
+            }
         }
         
         this.updateHand();
@@ -236,8 +240,8 @@ battle.prototype = {
             }
             var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startLinePosY, 'minion');
             cardImage.scale.setTo(.09,.09);
-            var health = this.game.add.text(this.startHandPositionX + 3 + i*48, startLinePosY + 45,automaton.durability+'', {fontSize: '12px', fill: '#f00'});
-            var attack = this.game.add.text(this.startHandPositionX + 30 + i*48, startLinePosY + 45,automaton.energy+'', {fontSize: '12px', fill: '#00f'});
+            var health = this.game.add.text(this.startHandPositionX + 30 + i*48, startLinePosY + 45,automaton.durability+'', {fontSize: '12px', fill: '#00f'});
+            var attack = this.game.add.text(this.startHandPositionX + 3 + i*48, startLinePosY + 45,automaton.energy+'', {fontSize: '12px', fill: '#f00'});
                 
             card.add(back);
             card.add(cardImage);
@@ -269,12 +273,12 @@ battle.prototype = {
             var back = this.game.add.sprite(this.startHandPositionX + i *48, startEnemyLinePoxY, cardBackBox);
             back.inputEnabled = true;
             back.useHandCursor = true;
-            back.events.onInputDown.add(this.enemyAutomatonClick.bind(this, this.data.player.avatar.hand[i]), this);
+            back.events.onInputDown.add(this.enemyAutomatonClick.bind(this, i), this);
 
             var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startEnemyLinePoxY, 'minion');
             cardImage.scale.setTo(.09,.09);
-            var health = this.game.add.text(this.startHandPositionX + 3 + i*48, startEnemyLinePoxY + 45, automaton.durability+'', {fontSize: '12px', fill: '#f00'});
-            var attack = this.game.add.text(this.startHandPositionX + 30 + i*48, startEnemyLinePoxY + 45, automaton.energy+'', {fontSize: '12px', fill: '#00f'});
+            var health = this.game.add.text(this.startHandPositionX + 30 + i*48, startEnemyLinePoxY + 45, automaton.durability+'', {fontSize: '12px', fill: '#00f'});
+            var attack = this.game.add.text(this.startHandPositionX + 3 + i*48, startEnemyLinePoxY + 45, automaton.energy+'', {fontSize: '12px', fill: '#f00'});
             
             card.add(back);
             card.add(cardImage);
