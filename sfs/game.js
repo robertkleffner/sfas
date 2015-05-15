@@ -398,6 +398,7 @@ Automaton: function(submatons) {
     this.durability = 1;
     this.energy = 1;
     this.canAttack = false;
+    this.image = 'minion';
 
     // Energy = sum(subs.energy) + 1
     // Durability = sum(subs.durability) + 1

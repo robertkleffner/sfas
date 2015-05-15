@@ -23,16 +23,25 @@ battle.prototype = {
         this.game.load.image('chomp', 'assets/icons/bestial-fangs.png');
         this.game.load.image('kappa', 'assets/icons/kappa.png');
         this.game.load.image('hoist', 'assets/icons/trebuchet.png');
-        this.game.load.image('minion', 'assets/creatures/vintage-robot.png');
         this.game.load.image('profile', 'assets/ability/iron-mask.png');
         this.game.load.image('profile_enemy', 'assets/ability/iron-mask.png');
         this.game.load.image('ability', 'assets/ability/auto-repair.png');
         this.game.load.image('enemy_ability', 'assets/ability/auto-repair.png');
-
         this.game.load.image('babbock', 'assets/avatars/babbock.jpg');
+
         this.game.load.image('de_borg', 'assets/avatars/de_borg.jpg');
         this.game.load.image('mccreary', 'assets/avatars/mccreary.jpg');
         this.game.load.image('van_newman', 'assets/avatars/van_newman.jpg');
+
+        this.game.load.image('minion', 'assets/creatures/vintage-robot.png');
+        this.game.load.image('spider', 'assets/creatures/angular-spider.jpg');
+        this.game.load.image('autogun', 'assets/creatures/autogun.jpg');
+        this.game.load.image('robe', 'assets/creatures/robe.jpg');
+        this.game.load.image('mech', 'assets/creatures/missle-mech.jpg');
+        this.game.load.image('golem', 'assets/creatures/robot-golem.jpg');
+        this.game.load.image('suit', 'assets/creatures/space-suit.jpg');
+        this.game.load.image('spiked', 'assets/creatures/spiked-armor.jpg');
+        this.game.load.image('vintage', 'assets/creatures/vintage-robot.jpg');
     },
 
     init: function(data) {
@@ -238,6 +247,8 @@ battle.prototype = {
                 back.useHandCursor = true;
                 back.events.onInputDown.add(this.toggleAutomaton.bind(this, card));
             }
+
+            this.updateImages(automaton);
             var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startLinePosY, 'minion');
             cardImage.scale.setTo(.09,.09);
             var health = this.game.add.text(this.startHandPositionX + 30 + i*48, startLinePosY + 45,automaton.durability+'', {fontSize: '12px', fill: '#00f'});
@@ -275,7 +286,8 @@ battle.prototype = {
             back.useHandCursor = true;
             back.events.onInputDown.add(this.enemyAutomatonClick.bind(this, i), this);
 
-            var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startEnemyLinePoxY, 'minion');
+            this.updateImages(automaton);
+            var cardImage = this.game.add.sprite(this.startHandPositionX + i*48, startEnemyLinePoxY, automaton.image);
             cardImage.scale.setTo(.09,.09);
             var health = this.game.add.text(this.startHandPositionX + 30 + i*48, startEnemyLinePoxY + 45, automaton.durability+'', {fontSize: '12px', fill: '#00f'});
             var attack = this.game.add.text(this.startHandPositionX + 3 + i*48, startEnemyLinePoxY + 45, automaton.energy+'', {fontSize: '12px', fill: '#f00'});
@@ -285,6 +297,25 @@ battle.prototype = {
             card.add(health);
             card.add(attack);
             this.opponentLine.push(card);
+        }
+    },
+
+    updateImages: function(automaton){
+        var max = automaton.energy;
+        var durability = automaton.durability;
+        if (durability > max){
+            if (durability > 7) {automaton.image = 'suit'}
+            else if (durability > 5) {automaton.image = 'vintage'}
+            else if (durability > 3) {automaton.image = 'robe'}
+        }
+        else if (durability === max){
+            if (durability > 3) {automaton.image = 'spiked'}
+            else {automaton.image = 'minion'}
+        }
+        else{
+            if (max > 7) {automaton.image = 'mech'}
+            else if (max > 5) {automaton.image = 'golem'}
+            else if (max > 3) {automaton.image = 'autogun'}
         }
     },
 
